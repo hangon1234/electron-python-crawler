@@ -1,0 +1,46 @@
+<script>
+    
+    const {ipcRenderer} = require("electron");
+    const {PythonShell} = require("python-shell");
+    const path = require('path');
+
+    // Send log to main process
+    let send_log = (message) => {
+        ipcRenderer.send("SUB_RENDERER_LOG", message);
+    }
+    
+    // Execute python script
+    let script_path = path.join(__dirname, "index.py");
+    let shell = new PythonShell(script_path, {mode: 'text'});
+
+    // When there is message from python process,
+    // Send result to main renderer
+    shell.on("message", (message) => {
+        console.log(message)
+        message = JSON.parse(message)
+        console.log(message)
+        ipcRenderer.send("SUB_RENDERER_SEND", message);
+    })
+
+    // MESSAGE FROM MAIN RENDERER
+    ipcRenderer.on('COMMAND_FROM_MAIN', (event, args) => {
+        send_log("Messasge received");
+        args = JSON.stringify(args);
+        send_log(args)
+        shell.send(args);
+    });
+
+    // READ AND SEND CONFIGURATION
+    let config = new PythonShell(path.join(__dirname, "config.py"), {mode:'text'});
+    ipcRenderer.on("READ_CONFIG", (event, args) => {
+        config.send(`{"path" : "${__dirname.split("\\").join('/')}"}`);
+        config.on('message', (message) => {
+            message = JSON.parse(message)
+            console.log(message)
+            ipcRenderer.send("SEND_CONFIG", message)
+        });
+    })
+
+    // Send initial message
+    ipcRenderer.send("SUB_RENDERER_READY");
+</script>

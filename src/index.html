@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>YouTube Crawler</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="./css/bootstrap.min.css">
+    <script>
+      window.$ = window.jQuery = require('./js/jquery-3.4.1.slim.min.js');
+    </script>
+    <script src="./js/popper.min.js"></script>
+    <script src="./js/bootstrap.min.js"></script>
+  </head>
+  <body>
+    <div class="container-fluid">
+      <h1 class="mt-5">YouTube Crawler</h1>
+      <div class="row">
+        <div class="col-md-5 mt-5" style='height: 400px;
+        overflow-x: scroll;'>
+          <h3>Input information</h3>
+          <div>
+            <div class="form-group">
+              <label>YouTube API key</label>
+              <input id="api_key" class='form-control' type="text" placeholder="Input your API key here">
+            </div>
+            <div class="form-group">
+              <label for="">Video ID</label>
+              <input class='form-control' type="text" placeholder="Input the video ID you want to crawl" id="video_id">
+            </div>
+            <div class="form-group">
+              <label for="">Save path</label>
+              <input type="text" id="save_path" class="form-control" placeholder="Select">
+            </div>
+            <div class="form-group">
+              <label for="">Select order by</label>
+              <select class='form-control' name="order_by" id="order_by" class="custom-class">
+                <option value="time_asc" selected>Time ascending</option>
+                <option value="time_desc">Time descending</option>
+                <option value="more_like">More like</option>
+                <option value="author_name">Author name</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="">Amount to crawl</label>
+              <select name="" id="amount" class="form-control">
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="30">30</option>
+                <option value="40">40</option>
+                <option value="50">50</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" id="start">Click and start crawling</button>
+          </div>
+        </div>
+        <div class="col-md-7 mt-5"style='height: 400px;
+        overflow-x: scroll;'>
+          <h3>Result</h3>
+          <div id="result-group">
+            <div id="alert">             
+            </div>
+            <div id="result">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      const {ipcRenderer} = require('electron');
+
+      // Error handler
+      let handleError = (args) => {
+        // Change alert class and inner HTML
+        document.getElementById("alert").className = "alert alert-danger";
+        document.getElementById("alert").innerHTML = "Error!"
+        // Show error information
+        document.getElementById("result").innerHTML = "<p>" + JSON.stringify(args) + "</p>";
+      }
+
+      // Success result handler
+      let handleResult = (args) => {
+        // Change alert class and inner HTML
+        document.getElementById("alert").className = 'alert alert-success';
+        document.getElementById("alert").innerHTML = "Success!"
+        // Append result
+        let result_string = "<ul>";
+        for(const[index,element] of args.comments.entries()){
+          result_string += `<li>Name: ${element.authorDisplayName}<br>
+          Time: ${element.publishedAt}<br>
+          Like: ${element.likeCount}<br>
+          Comment: ${element.textOriginal}</li>`;
+          if(index + 1 == document.getElementById("amount").value)
+            break;
+        }
+        document.getElementById("result").innerHTML = result_string + "</ul>"
+      }
+
+      document.getElementById("start").onclick = () => {
+        
+        let api_key = document.getElementById("api_key").value;
+        let video_id = document.getElementById("video_id").value;
+        let order_by = document.getElementById("order_by").value;
+        let save_path = document.getElementById("save_path").value;
+        let amount = document.getElementById("amount").value;
+
+        // MESSAGE TO SUB RENDERER  
+        ipcRenderer.send("MAIN_RENDERER_SEND", {
+          "function" : "get_comments",
+          "api_key" : api_key,
+          "video_id" : video_id,
+          "order_by" : order_by,
+          "save_path" : save_path,
+          "amount" : amount,
+          "execute" : true,
+        });
+      };
+
+      // SELECT SAVE PATH
+      document.getElementById("save_path").onclick = () =>{
+        ipcRenderer.send("SELECT_PATH");
+      };
+
+      ipcRenderer.on('PATH_REPLY', (event, arg) => {
+        document.getElementById("save_path").value = arg;
+      })
+
+      // MESSAGE TO MAIN PROCESS
+      ipcRenderer.send("MAIN_RENDERER_READY");
+
+      // Read config and apply
+      ipcRenderer.send("READ_CONFIG");
+      ipcRenderer.on("SEND_CONFIG", (event, args)=>{
+        document.getElementById("save_path").value = args.save_path;
+        document.getElementById("api_key").value = args.api_key;
+      });
+      
+      // MESSAGE FROM MAIN PROCESS
+      ipcRenderer.on("REPLY", (event, arg) => {
+        console.log(arg);
+      })
+      // MESSAGE FROM SUB RENDERER
+      ipcRenderer.on("MESSAGE_FROM_SUB", (event, args) => {
+        console.log(args);
+        if(args.error === true)
+          handleError(args);
+        else
+          handleResult(args);
+      })
+      // MESSAGE TO SUB RENDERER
+      
+    </script>
+  </body>
+</html>
