@@ -6,3 +6,7 @@ The one thing remind to is that don't try to use ZeroRPC, which seems abandoned 
 I recommend you to read article I mentioned above and read Electron docs about its architecture.
 
 Screenshots:
+![1](https://github.com/hangon1234/electron-python-crawler/blob/master/1.png?raw=true)
+Main menu
+![2](https://github.com/hangon1234/electron-python-crawler/blob/master/2.png?raw=true)
+Result
