@@ -6,7 +6,17 @@ The one thing remind to is that don't try to use ZeroRPC, which seems abandoned 
 I recommend you to read article I mentioned above and read Electron docs about its architecture.
 
 Screenshots:
+
 ![1](https://github.com/hangon1234/electron-python-crawler/blob/master/1.png?raw=true)
+
 Main menu
+
 ![2](https://github.com/hangon1234/electron-python-crawler/blob/master/2.png?raw=true)
+
 Result
+
+### Acknowledgement
+
+Javascript is new to me. I prefer do backend with Python.
+Doing frontend with Electron doesn't require lot of knowledge in Javascript.
+Electron can save time to do frontend so you can more focus on backend.
